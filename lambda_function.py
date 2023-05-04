@@ -1,9 +1,3 @@
-''' 
-lambda_function.py
-Provides Stevebot functionality while hosted on AWS Lambda server
-Intake through API Gateway link, makes POST requests to send messages
-'''
-
 import os
 import random
 import re
@@ -20,7 +14,6 @@ main_choices = [
     '*messa di voce\'ing intensifies*',
     ':sassy-sano:',
     ':master-sano:',
-    ':\'ssup:',
     ':acoustic_guitar::acoustic_guitar::acoustic_guitar:',
     'I wanna be _vibin_ :catjam: in :hawaii:',
     'it me ya fav boi treble reportin in',
@@ -37,7 +30,7 @@ main_choices = [
     ':amaze:',
     ':dicaprio_laugh:',
     ':bear_roll:',
-    '@Trip ya might want to see a doctor for all those :shaking-eyes: reaccs... :lizard-hehehehe:',
+    # '@Trip ya might want to see a doctor for all those :shaking-eyes: reaccs... :lizard-hehehehe:',
     ':0_0:',
     'Another random shout-out to our lovely social chairs for bringing us closer :meow_heart::cat-meow-hearts::heart::heart::heart:',
     ':exploding_head: when the basses hit that low D :mindblown::weary::sweat_drops::walter-faint:',
@@ -48,7 +41,7 @@ main_choices = [
     'Another reminder to send in anonymous/non-anonymous messages of Chorale shout-outs to yourmanito92@gmail.com! 😊 You can use temporary email address (like 1hr email) for anonymity!',
     '*plays a sick slack key vamp*',
     # '*cringing in Hawaiian*',
-    # '*judging in ʻŌlelo Hawaiʻi*',
+    '*judging in ʻŌlelo Hawaiʻi*',
     # 'Mmmmm that post was so ʻono! nom nom nom',
     'catfacts_trigger',  # Will pick random cat fact
     'catfacts_trigger',  # Mohr kat faxs
@@ -73,7 +66,7 @@ cat_intro = [
 
 cat_flair = [
     "Meow! 😺", "Me-woah! 😸", "Me-awww! 😻", "Le Meow 😺", "yeet.", "Stev-eow!",
-    ":meow_floof_pat:", ":meow-dj:", ":meow-bongotap:", ":cat_keyboard:",
+    ":meow_floof_pat:", ":meow-dj:", ":bongocat:", ":cat_keyboard:",
     "Aww! 🥺"
 ]
 
@@ -132,10 +125,13 @@ def handle_message(event, post_to_slack):
     msg = event['event']['text'].lower()
     user = event["event"]["user"]
     print(f"I heard ya, message {msg}")
+    
+    '''
     if "cookie" in msg:
         gif_url = get_random_gif("cookie monster")
         post_to_slack(event, "DID SOMEONE SAY *COOKIE*?!\n", gif_url)
-    elif "cat fact" in msg:
+    '''
+    if "cat fact" in msg:
         response = random.choice(cat_intro) + random.choice(
                     catfacts) + random.choice(cat_flair)
         post_to_slack(event, response)
@@ -176,7 +172,8 @@ def handle_message(event, post_to_slack):
         choices = [
             'I\'m loving the hhhhwh in that. thank you 🥰🥰',
             'F`ing delicious. Thank you for the beautiful hhwwwh. mHWaH',
-            f"You just made my day <@{user}>! thank you: cat - meow - hearts:"
+            f"You just made my day <@{user}>! thank you :cat-meow-hearts:", 
+            "THAT'S IT!!!!"
         ]
         post_to_slack(event, random.choice(choices))
     elif 'sano' in msg or 'steve' in msg:
@@ -198,14 +195,14 @@ def handle_message(event, post_to_slack):
             post_to_slack(event, "*Hwhy")
     elif re.search(r'[^h]where', msg):
         if random.randrange(HW_RESPONSE_RATE) == 0:
-            post_to_slack(event, "*Hwhere")
-    elif re.search(r'[^h]when', msg):
-        if random.randrange(HW_RESPONSE_RATE) == 0:
             choices = [
                 "*Hwhere", "*Hwhere is the Hay?", "*Hwhere is the Blush?",
                 "*Hwhere is the Bee?"
             ]
             post_to_slack(event, random.choice(choices))
+    elif re.search(r'[^h]when', msg):
+        if random.randrange(HW_RESPONSE_RATE) == 0:
+            post_to_slack(event, "*Hwhen")
     elif "test_invoke" in msg:
         choices = [
             ':boba1::boba2:\n:boba3::boba4:\n:boba5::boba6:', 'THAT\'S IT!!!',
@@ -220,8 +217,6 @@ def handle_message(event, post_to_slack):
         post_to_slack(event, random.choice(choices))
 
 '''
-# Not yet fully implemented unfortunately
-# api_key was forbidden as of 4/2/2023; also need to check urllib request usage
 def get_random_gif(tag):
     # Fetch a random GIF from Giphy using tag
     
@@ -238,7 +233,7 @@ def get_random_gif(tag):
     return data['data']['url']
 '''
 
-# Code below are adapted from https://github.com/cazabec/slackbot-aws-lambda/blob/main/lambda/event_receiver.py
+print('Loading function')
 
 def is_bot(event):
     return "bot_profile" in event["event"]
@@ -275,31 +270,35 @@ def send_response(event, response_text, url = "", ephemeral = False):
 ENTRY POINT, TRUE MAIN
 """
 def lambda_handler(event, context):
-    # print("Received event: " + json.dumps(event, indent=2))
-
-    slack_body = event.get("body")
-    if slack_body:
-        '''
-        Code for responding to challenge
-        '''
-        slack_event = json.loads(slack_body)
-        challenge_answer = slack_event.get("challenge")
+    print("Received event: " + json.dumps(event, indent=2))
+    
+    # Command is provided in the form of application/x-www-form-urlencoded
+    try: 
+        cmd_dict = urllib.parse.parse_qs(event)
+        print(cmd_dict)
+        if "command" in cmd_dict:
+            handle_command(cmd_dict, send_response)
         
-        if challenge_answer:
-            return {
-                'statusCode': 200,
-                'body': challenge_answer
-            }
-        
-        if not is_bot(slack_event):
-            print(slack_event)
-            print("Received text: " + slack_event['event']['text'])
+    except Exception as e:
+        slack_body = event.get("body")
+        if slack_body:
+            '''
+            Code for responding to challenge
+            '''
+            slack_event = json.loads(slack_body)
+            challenge_answer = slack_event.get("challenge")
             
-            if "command" in slack_event['event']:
-                handle_command(slack_event, send_response)
-            else:
+            if challenge_answer:
+                return {
+                    'statusCode': 200,
+                    'body': challenge_answer
+                }
+            
+            if not is_bot(slack_event):
+                print(slack_event)
+                print("Received text: " + slack_event['event']['text'])
+                
                 handle_message(slack_event, send_response)
-                # send_response(slack_event, "Hi!")
     
     return {
         'statusCode': 200,
