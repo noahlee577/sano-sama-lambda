@@ -1,3 +1,9 @@
+''' 
+lambda_function.py
+Provides Stevebot functionality while hosted on AWS Lambda server
+Intake through API Gateway link, makes POST requests to send messages
+'''
+
 import os
 import random
 import re
@@ -216,6 +222,9 @@ def handle_message(event, post_to_slack):
         ]
         post_to_slack(event, random.choice(choices))
 
+# Not yet fully implemented unfortunately
+# api_key was forbidden as of 4/2/2023; also need to check urllib request usage
+
 '''
 def get_random_gif(tag):
     # Fetch a random GIF from Giphy using tag
@@ -233,6 +242,7 @@ def get_random_gif(tag):
     return data['data']['url']
 '''
 
+# Code below are adapted from https://github.com/cazabec/slackbot-aws-lambda/blob/main/lambda/event_receiver.py
 print('Loading function')
 
 def is_bot(event):
